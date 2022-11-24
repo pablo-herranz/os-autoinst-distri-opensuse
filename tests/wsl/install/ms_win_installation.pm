@@ -30,6 +30,7 @@ sub run {
         assert_screen 'windows-boot';
         send_key 'spc';    # boot from CD or DVD
     }
+    sleep 900;
     # This test works onlywith CDMODEL=ide-cd due to windows missing scsi drivers which are installed via scsi iso
     assert_screen 'windows-setup', 300;
     send_key 'alt-n';    # next
