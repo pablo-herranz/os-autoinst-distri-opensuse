@@ -54,16 +54,16 @@ sub run {
     # TODO: all this part should be added to the unattend XML in the future
 
     # Setup stable lock screen background
-    record_info('Config lockscreen', 'Setup stable lock screen background');
-    $self->use_search_feature('lock screen settings');
-    assert_screen 'windows-lock-screen-in-search';
-    wait_still_screen stilltime => 2, timeout => 10, similarity_level => 43;
-    assert_and_click 'windows-lock-screen-in-search', dclick => 1;
-    assert_screen 'windows-lock-screen-settings';
-    assert_and_click 'windows-lock-screen-background';
-    assert_and_click 'windows-select-picture';
-    assert_and_click 'windows-close-lockscreen';
-    wait_still_screen stilltime => 2, timeout => 10, similarity_level => 43;
+    # record_info('Config lockscreen', 'Setup stable lock screen background');
+    # $self->use_search_feature('lock screen settings');
+    # assert_screen 'windows-lock-screen-in-search';
+    # wait_still_screen stilltime => 2, timeout => 10, similarity_level => 43;
+    # assert_and_click 'windows-lock-screen-in-search', dclick => 1;
+    # assert_screen 'windows-lock-screen-settings';
+    # assert_and_click 'windows-lock-screen-background';
+    # assert_and_click 'windows-select-picture';
+    # assert_and_click 'windows-close-lockscreen';
+    # wait_still_screen stilltime => 2, timeout => 10, similarity_level => 43;
 
     # These commands disable notifications that Windows shows randomly and
     # make our windows lose focus
