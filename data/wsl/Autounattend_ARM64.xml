@@ -392,11 +392,7 @@
         <ProtectYourPC>1</ProtectYourPC>
         <UnattendEnableRetailDemo>false</UnattendEnableRetailDemo>
       </OOBE>
-<<<<<<< HEAD:data/wsl/Autounattend_Arm64.xml
-			<FirstLogonCommands>
-=======
       <FirstLogonCommands>
->>>>>>> e6e0c1fa7 (Major changes to improve the Windows unattend install):data/wsl/Autounattend_ARM64.xml
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
           <CommandLine>powershell.exe wsl --update</CommandLine>
