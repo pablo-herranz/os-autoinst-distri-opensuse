@@ -76,14 +76,14 @@
               <PartitionID>4</PartitionID>
             </ModifyPartition>
           </ModifyPartitions>
-          <DiskID>0</DiskID>
+          <DiskID>1</DiskID>
           <WillWipeDisk>true</WillWipeDisk>
         </Disk>
       </DiskConfiguration>
       <ImageInstall>
         <OSImage>
           <InstallTo>
-            <DiskID>0</DiskID>
+            <DiskID>1</DiskID>
             <PartitionID>4</PartitionID>
           </InstallTo>
         </OSImage>
@@ -353,10 +353,10 @@
           <Order>58</Order>
           <Path>powershell.exe Set-ItemProperty -Path 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Microsoft.SkyDrive.Desktop\' -Name Enabled -Value 0</Path>
         </RunSynchronousCommand>
-				<!-- Enable WSL and Virtual Machine Platform -->
+        <!-- Enable WSL and Virtual Machine Platform -->
         <RunSynchronousCommand wcm:action="add">
-            <Order>59</Order>
-            <Path>powershell.exe Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart; Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform /Y</Path>
+          <Order>59</Order>
+          <Path>powershell.exe Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart; Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform /Y</Path>
         </RunSynchronousCommand>
       </RunSynchronous>
     </component>
@@ -392,7 +392,11 @@
         <ProtectYourPC>1</ProtectYourPC>
         <UnattendEnableRetailDemo>false</UnattendEnableRetailDemo>
       </OOBE>
+<<<<<<< HEAD:data/wsl/Autounattend_Arm64.xml
 			<FirstLogonCommands>
+=======
+      <FirstLogonCommands>
+>>>>>>> e6e0c1fa7 (Major changes to improve the Windows unattend install):data/wsl/Autounattend_ARM64.xml
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
           <CommandLine>powershell.exe wsl --update</CommandLine>
