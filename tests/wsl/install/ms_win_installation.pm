@@ -36,53 +36,31 @@ sub run {
         }    # boot from CD or DVD
     }
 
-    if (check_var('WIN_UNATTENDED', '0')) {
-        # This test works onlywith CDMODEL=ide-cd due to windows missing scsi drivers which are installed via scsi iso
-        assert_screen 'windows-setup', 300;
-        send_key 'alt-n';    # next
-        prepare_win11 if (check_var('WIN_VERSION', '11'));
-
-        save_screenshot;
-        send_key 'alt-i';    # install Now
-        save_screenshot;
-        send_key 'alt-n';    # next
-        assert_screen 'windows-activate';
-        if (my $key = get_var('_SECRET_WINDOWS_10_PRO_KEY')) {
-            type_password $key . "\n";
-            assert_screen([qw(windows-wrong-key windows-license-with-key)]);
-            die("The provided product key didn't work...") if (match_has_tag('windows-wrong-key'));
-        }
-        else {
-            assert_and_click 'windows-no-prod-key';
-            assert_screen 'windows-select-system';
-            send_key_until_needlematch('windows-10-pro', 'down');
-            send_key 'alt-n';    # select OS (Win 10 Pro)
-            assert_screen 'windows-license';
-        }
-        send_key 'alt-a';    # accept eula
-        send_key 'alt-n';    # next
-        assert_screen 'windows-installation-type';
-        send_key 'alt-c';    # custom
-        assert_screen 'windows-disk-partitioning';
-        send_key 'alt-l';    # load driver
-        assert_screen 'windows-load-driver';
-        send_key 'alt-b';    # browse button
-        send_key 'c';
-        save_screenshot;
-        send_key 'c';    # go to second CD drive with drivers
-        send_key 'right';    # ok
-        sleep 0.5;
-        send_key 'ret';
-        wait_still_screen stilltime => 3, timeout => 10;
-        send_key_until_needlematch 'windows-all-drivers-selected', 'shift-down';    # select all drivers
-        send_key 'alt-n';
-        assert_screen 'windows-partitions';
-        assert_and_click 'windows-next-install';
-        assert_screen 'windows-restart', 600;
-        send_key 'alt-r';
-    } else {
-        $self->wait_boot_windows(is_firstboot => 1);
+    record_info('Windows firstboot', 'Starting Windows for the first time');
+    wait_still_screen stilltime => 60, timeout => 300;
+    # When starting Windows for the first time, several screens or pop-ups may appear
+    # in a different order. We'll try to handle them until the desktop is shown
+    assert_screen(['windows-edge-welcome', 'windows-desktop', 'windows-edge-decline', 'networks-popup-be-discoverable', 'windows-start-menu', 'windows-qemu-drivers', 'windows-setup-browser'], timeout => 120);
+    while (not match_has_tag('windows-desktop')) {
+        assert_and_click 'windows-edge-welcome' if (match_has_tag 'windows-edge-welcome');
+        assert_and_click 'windows-setup-browser' if (match_has_tag 'windows-setup-browser');
+        assert_and_click 'network-discover-yes' if (match_has_tag 'networks-popup-be-discoverable');
+        assert_and_click 'windows-edge-decline' if (match_has_tag 'windows-edge-decline');
+        assert_and_click 'windows-start-menu' if (match_has_tag 'windows-start-menu');
+        assert_and_click 'windows-qemu-drivers' if (match_has_tag 'windows-qemu-drivers');
+        wait_still_screen stilltime => 15, timeout => 60;
+        assert_screen(['windows-edge-welcome', 'windows-desktop', 'windows-edge-decline', 'networks-popup-be-discoverable', 'windows-start-menu', 'windows-qemu-drivers', 'windows-setup-browser'], timeout => 120);
     }
+
+    # These commands disable notifications that Windows shows randomly and
+    # make our windows lose focus
+    $self->open_powershell_as_admin;
+    $self->run_in_powershell(cmd => 'reg add "HKLM\Software\Policies\Microsoft\Windows" /v Explorer');
+    $self->run_in_powershell(cmd => 'reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /v DisableNotificationCenter /t REG_DWORD /d 1');
+    $self->run_in_powershell(cmd => 'reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /v ToastEnabled /t REG_DWORD /d 0');
+    record_info 'Port close', 'Closing serial port...';
+    $self->run_in_powershell(cmd => '$port.close()', code => sub { });
+    $self->run_in_powershell(cmd => 'exit', code => sub { });
 }
 
 1;

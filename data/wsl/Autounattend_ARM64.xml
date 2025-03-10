@@ -76,14 +76,14 @@
               <PartitionID>4</PartitionID>
             </ModifyPartition>
           </ModifyPartitions>
-          <DiskID>0</DiskID>
+          <DiskID>1</DiskID>
           <WillWipeDisk>true</WillWipeDisk>
         </Disk>
       </DiskConfiguration>
       <ImageInstall>
         <OSImage>
           <InstallTo>
-            <DiskID>0</DiskID>
+            <DiskID>1</DiskID>
             <PartitionID>4</PartitionID>
           </InstallTo>
         </OSImage>
@@ -353,10 +353,49 @@
           <Order>58</Order>
           <Path>powershell.exe Set-ItemProperty -Path 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Microsoft.SkyDrive.Desktop\' -Name Enabled -Value 0</Path>
         </RunSynchronousCommand>
-				<!-- Enable WSL and Virtual Machine Platform -->
+        <!-- Enable WSL and Virtual Machine Platform -->
         <RunSynchronousCommand wcm:action="add">
-            <Order>59</Order>
-            <Path>powershell.exe Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart; Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform /Y</Path>
+          <Order>59</Order>
+          <Path>powershell.exe Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart; Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform /Y</Path>
+        </RunSynchronousCommand>
+        <!-- Disable Windows Spotlight -->
+        <RunSynchronousCommand wcm:action="add">
+          <Order>60</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v RotatingLockScreenEnabled /t REG_DWORD /d 0 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>61</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v DisableWindowsSpotlightFeatures /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>62</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v ContentDeliveryAllowed /t REG_DWORD /d 0 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>63</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>64</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEnabled /t REG_DWORD /d 0 /f</Path>
+        </RunSynchronousCommand>
+        <!-- Disable notifications and pop-ups -->
+        <RunSynchronousCommand wcm:action="add">
+          <Order>65</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKLM\Software\Policies\Microsoft\Windows" /v Explorer</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>66</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKLM\Software\Policies\Microsoft\Windows\Explorer" /v DisableNotificationCenter /t REG_DWORD /d 1</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>67</Order>
+          <Path>%windir%\System32\reg.exe ADD "HKLM\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /v ToastEnabled /t REG_DWORD /d 0</Path>
+        </RunSynchronousCommand>
+        <!-- Disable Windows Spotlight -->
+        <RunSynchronousCommand wcm:action="add">
+          <Order>68</Order>
+          <Path>powershell.exe -Command "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightFeatures -Value 1 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightOnActionCenter -Value 1 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightOnSettings -Value 1 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightWindowsWelcomeExperience -Value 1 -Force"</Path>
         </RunSynchronousCommand>
       </RunSynchronous>
     </component>
@@ -392,7 +431,11 @@
         <ProtectYourPC>1</ProtectYourPC>
         <UnattendEnableRetailDemo>false</UnattendEnableRetailDemo>
       </OOBE>
+<<<<<<< HEAD:data/wsl/Autounattend_Arm64.xml
 			<FirstLogonCommands>
+=======
+      <FirstLogonCommands>
+>>>>>>> e6e0c1fa7 (Major changes to improve the Windows unattend install):data/wsl/Autounattend_ARM64.xml
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
           <CommandLine>powershell.exe wsl --update</CommandLine>
