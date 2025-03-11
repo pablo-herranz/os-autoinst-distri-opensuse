@@ -9,28 +9,37 @@
 use Mojo::Base qw(windowsbasetest);
 use testapi;
 
+sub dowload_and_run_script {
+    my ($self, $script) = @_;
+
+    my $timeout = ($script ~= "UpdateInstall.ps1" ? 3600 : 60);
+    my $vbs_url = data_url("wsl/$script");
+    $self->open_powershell_as_admin;
+    $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"$vbs_url\" -OutFile \"\$env:TEMP\\$script\"");
+    $self->run_in_powershell(cmd => "Set-ExecutionPolicy Bypass -Scope CurrentUser -Force");
+    $self->run_in_powershell(
+        cmd => "cd \$env:TEMP; .\\$script",
+        code => sub {
+            die("The $script script finished unespectedly or timed out...")
+              unless wait_serial('0', timeout => $timeout);
+        }
+    );
+
+}
+
 sub run {
     my $self = shift;
 
-    my $vbs_url = data_url("wsl/UpdateInstall.ps1");
-    $self->open_powershell_as_admin;
-    $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"$vbs_url\" -OutFile \"\$env:TEMP\\UpdateInstall.ps1\"");
-    $self->run_in_powershell(cmd => "Set-ExecutionPolicy Bypass -Scope CurrentUser -Force");
-    $self->run_in_powershell(
-        cmd => "cd \$env:TEMP; .\\UpdateInstall.ps1",
-        code => sub {
-            die("Update script finished unespectedly or timed out...")
-              unless wait_serial('0', timeout => 3600);
-        }
-    );
+    dowload_and_run_script("UpdateInstall.ps1")
     save_screenshot;
-    # The script autoreboot fails, so there's need to reboot manually
     $self->reboot_or_shutdown(1);
     while (defined(check_screen('windows-updating', 60))) {
         bmwqemu::diag("Applying updates while shutting down the machine...");
     }
     $self->wait_boot_windows;
 
+    dowload_and_run_script("SetWallpaper.ps1")
+    save_screenshot;
     # Shutdown
     $self->reboot_or_shutdown;
 }
