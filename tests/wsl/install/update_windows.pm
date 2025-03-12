@@ -9,18 +9,20 @@
 use Mojo::Base qw(windowsbasetest);
 use testapi;
 
-sub dowload_and_run_script {
+sub download_and_run_script {
     my ($self, $script) = @_;
+
+    bmwqemu::diag("Debug: script variable contains: '$script'");
 
     my $timeout = ($script =~ "UpdateInstall.ps1" ? 3600 : 60);
     my $vbs_url = data_url("wsl/$script");
     $self->open_powershell_as_admin;
-    $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"$vbs_url\" -OutFile \"\$env:TEMP\\$script\"");
+    $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"" . $vbs_url . "\" -OutFile \"\$env:TEMP\\" . $script . "\"");
     $self->run_in_powershell(cmd => "Set-ExecutionPolicy Bypass -Scope CurrentUser -Force");
     $self->run_in_powershell(
         cmd => "cd \$env:TEMP; .\\$script",
         code => sub {
-            die("The $script script finished unespectedly or timed out...")
+            die("The $script script finished unexpectedly or timed out...")
               unless wait_serial('0', timeout => $timeout);
         }
     );
@@ -29,7 +31,7 @@ sub dowload_and_run_script {
 sub run {
     my $self = shift;
 
-    $self->dowload_and_run_script(script => "UpdateInstall.ps1");
+    $self->download_and_run_script("UpdateInstall.ps1");
     save_screenshot;
     $self->reboot_or_shutdown(1);
     while (defined(check_screen('windows-updating', 60))) {
@@ -37,7 +39,7 @@ sub run {
     }
     $self->wait_boot_windows;
 
-    $self->dowload_and_run_script(script => "SetWallpaper.ps1");
+    $self->download_and_run_script("SetWallpaper.ps1");
     save_screenshot;
     # Shutdown
     $self->reboot_or_shutdown;
