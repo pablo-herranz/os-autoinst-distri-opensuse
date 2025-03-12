@@ -12,7 +12,7 @@ use testapi;
 sub dowload_and_run_script {
     my ($self, $script) = @_;
 
-    my $timeout = ($script ~= "UpdateInstall.ps1" ? 3600 : 60);
+    my $timeout = ($script =~ "UpdateInstall.ps1" ? 3600 : 60);
     my $vbs_url = data_url("wsl/$script");
     $self->open_powershell_as_admin;
     $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"$vbs_url\" -OutFile \"\$env:TEMP\\$script\"");
@@ -24,13 +24,12 @@ sub dowload_and_run_script {
               unless wait_serial('0', timeout => $timeout);
         }
     );
-
 }
 
 sub run {
     my $self = shift;
 
-    dowload_and_run_script("UpdateInstall.ps1")
+    $self->dowload_and_run_script(script => "UpdateInstall.ps1");
     save_screenshot;
     $self->reboot_or_shutdown(1);
     while (defined(check_screen('windows-updating', 60))) {
@@ -38,7 +37,7 @@ sub run {
     }
     $self->wait_boot_windows;
 
-    dowload_and_run_script("SetWallpaper.ps1")
+    $self->dowload_and_run_script(script => "SetWallpaper.ps1");
     save_screenshot;
     # Shutdown
     $self->reboot_or_shutdown;
