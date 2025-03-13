@@ -16,38 +16,53 @@ if (-not $port -or -not ($port -is [System.IO.Ports.SerialPort]) -or -not $port.
 
 # Set the wallpaper to the default one
 LogMessage "Setting default wallpaper..."
-# Clear the custom wallpaper registry entry
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper" -Value ""
+# Detect OS Version
+$OSVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ReleaseId
+$IsWindows11 = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").DisplayVersion -match "2[0-9]H2"
 
-# Refresh the desktop to apply changes
+# Set Default Wallpaper Path
+if ($IsWindows11) {
+    $DefaultWallpaper = "$env:Windir\Web\Wallpaper\Windows\img0.jpg"  # Windows 11 default
+} else {
+    $DefaultWallpaper = "$env:Windir\Web\Wallpaper\Windows\img0.jpg"  # Windows 10 default
+}
+
+# Apply Default Wallpaper
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper" -Value $DefaultWallpaper
+
+# Refresh Desktop
 Add-Type @"
 using System.Runtime.InteropServices;
 public class Desktop {
-  [DllImport("user32.dll", CharSet=CharSet.Auto)]
-  public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+    [DllImport("user32.dll", CharSet=CharSet.Auto)]
+    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 }
 "@
-[Desktop]::SystemParametersInfo(0x0014, 0, "", 0x01 -bor 0x02)  # SPI_SETDESKWALLPAPER
-# Set to the exact default image path
-$DefaultWallpaperPath = "$env:Windir\Web\Wallpaper\Windows\img0.jpg"
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper" -Value $DefaultWallpaperPath
-[Desktop]::SystemParametersInfo(0x0014, 0, $DefaultWallpaperPath, 0x01 -bor 0x02)
+[Desktop]::SystemParametersInfo(0x0014, 0, $DefaultWallpaper, 0x01 -bor 0x02)
+
+Write-Host "Desktop wallpaper reset to default for Windows $(if ($IsWindows11) {'11'} else {'10'})!" -ForegroundColor Green
 
 
 # Set the lockscreen background to the default one
 LogMessage "Setting default lockscreen background..."
-# Delete the custom login background file (if it exists)
+# Run this as Administrator
+if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "This script requires admin rights. Restart PowerShell as Administrator!" -ForegroundColor Red
+    exit
+}
+
+# Remove custom login background
 $LoginBackgroundPath = "$env:SystemRoot\System32\oobe\info\backgrounds\backgroundDefault.jpg"
 if (Test-Path $LoginBackgroundPath) {
     Remove-Item $LoginBackgroundPath -Force
+    Write-Host "Custom login screen image removed." -ForegroundColor Green
 }
-# Disable the OEMBackground registry flag
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\Background" -Name "OEMBackground" -Value 0 -Type DWord
-# Delete the backgrounds folder (if empty)
-$BackgroundsFolder = "$env:SystemRoot\System32\oobe\info\backgrounds"
-if (Test-Path $BackgroundsFolder -PathType Container) {
-    Remove-Item $BackgroundsFolder -Force -Recurse -ErrorAction SilentlyContinue
-}
+
+# Disable OEMBackground
+$RegPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\Background"
+Set-ItemProperty -Path $RegPath -Name "OEMBackground" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+
+Write-Host "Login screen reset to default. Reboot to see changes." -ForegroundColor Green
 
 LogMessage "Process finished successfully"
 $port.WriteLine('0')

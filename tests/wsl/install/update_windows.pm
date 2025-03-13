@@ -16,9 +16,7 @@ sub download_and_run_script {
 
     my $timeout = ($script =~ "UpdateInstall.ps1" ? 3600 : 60);
     my $vbs_url = data_url("wsl/$script");
-    $self->open_powershell_as_admin;
     $self->run_in_powershell(cmd => "Invoke-WebRequest -Uri \"" . $vbs_url . "\" -OutFile \"\$env:TEMP\\" . $script . "\"");
-    $self->run_in_powershell(cmd => "Set-ExecutionPolicy Bypass -Scope CurrentUser -Force");
     $self->run_in_powershell(
         cmd => "cd \$env:TEMP; .\\$script",
         code => sub {
@@ -31,6 +29,9 @@ sub download_and_run_script {
 sub run {
     my $self = shift;
 
+    $self->open_powershell_as_admin;
+    $self->run_in_powershell(cmd => "Set-ExecutionPolicy Bypass -Scope CurrentUser -Force");
+
     $self->download_and_run_script("UpdateInstall.ps1");
     save_screenshot;
     $self->reboot_or_shutdown(1);
@@ -39,6 +40,7 @@ sub run {
     }
     $self->wait_boot_windows;
 
+    $self->open_powershell_as_admin;
     $self->download_and_run_script("SetWallpaper.ps1");
     save_screenshot;
     # Shutdown
