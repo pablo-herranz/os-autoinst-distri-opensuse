@@ -8,6 +8,10 @@ conditional_schedule:
     WSL_SYSTEMD:
       '1':
         - wsl/enable_systemd
+  wsl_gui_test:
+    WSL_GUI:
+      '1':
+        - wsl/wsl_gui_test
   wsl_install:
     ARCH:
       'aarch64':
@@ -26,5 +30,6 @@ schedule:
   - '{{wsl_install}}'
   - wsl/distro_install
   - '{{wsl_firstrun}}'
-  - '{{enable_systemd}}'
   - wsl/smoke_test
+  - '{{enable_systemd}}'
+  - '{{wsl_gui_test}}'

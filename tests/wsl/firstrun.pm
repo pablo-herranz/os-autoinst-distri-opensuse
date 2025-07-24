@@ -111,17 +111,6 @@ sub register_via_scc {
     send_key 'alt-n';
 }
 
-sub wsl_gui_pattern {
-    assert_screen 'wsl-gui-pattern';
-    if (is_sut_reg) {
-        # Select product SLED if SLE_PRODUCT var is provided
-        send_key_until_needlematch('wsl_sled_install', 'alt-u') if (check_var('SLE_PRODUCT', 'sled'));
-        # Install wsl_gui pattern if WSL_GUI var is provided
-        send_key_until_needlematch('wsl_gui-pattern-install', 'alt-i') if (get_var('WSL_GUI'));
-    }
-    send_key 'alt-n';
-}
-
 sub run {
     # WSL installation is in progress
     assert_screen [qw(yast2-wsl-firstboot-welcome wsl-installing-prompt)], 480;
@@ -142,8 +131,6 @@ sub run {
         assert_screen 'local-user-credentials';
         enter_user_details([$realname, undef, $password, $password]);
         send_key 'alt-n';
-        # wsl-gui pattern installation (only in SLE15-SP4+ by now)
-        wsl_gui_pattern if (is_sle('>=15-SP4'));
         # Registration
         is_sle && register_via_scc();
         # SLED Workstation license agreement
