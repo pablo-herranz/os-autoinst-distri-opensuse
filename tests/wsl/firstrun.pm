@@ -131,6 +131,11 @@ sub run {
         assert_screen 'local-user-credentials';
         enter_user_details([$realname, undef, $password, $password]);
         send_key 'alt-n';
+        # Select product SLED if SLE_PRODUCT var is provided
+        if (is_sut_reg && check_var('SLE_PRODUCT', 'sled')) {
+            send_key_until_needlematch('wsl_sled_install', 'alt-u');
+            send_key 'alt-n';
+        }
         # Registration
         is_sle && register_via_scc();
         # SLED Workstation license agreement
