@@ -8,7 +8,7 @@
 
 use Mojo::Base qw(windowsbasetest);
 use testapi;
-use utils qw(enter_cmd_slow);
+use utils qw(enter_cmd_slow zypper_call);
 
 # Define screen resolution to center the mouse later
 use constant WIDTH  => 1024;
