@@ -40,8 +40,6 @@ sub run {
         $self->run_in_powershell(cmd => 'wsl -u root zypper -q -n in python3', timeout => 120);
         $self->run_in_powershell(cmd => q{wsl python3 -c "print('Hello from Python living in WSL')"});
     }
-    # Check if wsl_gui has been installed during the YaST2 firstboot
-    $self->run_in_powershell(cmd => 'wsl /bin/bash -c "zypper -q se -i -t pattern wsl"') if (get_var('WSL_GUI'));
     # Check if SLED has been enabled during the YaST2 firstboot
     $self->run_in_powershell(cmd => 'wsl /bin/bash -c "cat /etc/os-release | grep -i desktop"') if (check_var('SLE_PRODUCT', 'sled'));
     $self->run_in_powershell(cmd => 'wsl --shutdown', timeout => 60);

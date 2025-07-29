@@ -21,11 +21,18 @@ sub run () {
     assert_screen(['windows-desktop', 'powershell-as-admin-window']);
     $self->open_powershell_as_admin if (match_has_tag('windows-desktop'));
 
+    # Enter in the WSL prompt
+    enter_cmd_slow("wsl");
+
     # We will install wsl_gui pattern from CLI now instead of firstboot, to make
     # it available in openSUSE too.
     become_root;
     zypper_call("install -t pattern wsl_gui");
     enter_cmd_slow "exit\n";
+
+
+    # Check if wsl_gui has been installed properly
+    $self->run_in_powershell(cmd => 'wsl /bin/bash -c "zypper -q se -i -t pattern wsl"');
 
     enter_cmd_slow "xeyes\n";
     assert_screen "wsl-xeyes-window-new";
