@@ -8,7 +8,7 @@
 
 use Mojo::Base qw(windowsbasetest);
 use testapi;
-use utils qw(enter_cmd_slow zypper_call);
+use utils qw(enter_cmd_slow);
 
 # Define screen resolution to center the mouse later
 use constant WIDTH  => 1024;
@@ -27,7 +27,7 @@ sub run () {
     # We will install wsl_gui pattern from CLI now instead of firstboot, to make
     # it available in openSUSE too.
     become_root;
-    zypper_call("install -t pattern wsl_gui");
+    enter_cmd_slow("zypper -n install -t pattern wsl_gui");
     enter_cmd_slow "exit\n";
 
 
