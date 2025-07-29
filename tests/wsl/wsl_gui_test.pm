@@ -25,15 +25,15 @@ sub run () {
     # it available in openSUSE too.
     $self->run_in_powershell(cmd => 'wsl --user root /bin/bash -c "zypper -q -n install -t pattern wsl_gui"');
 
-
     # Check if wsl_gui has been installed properly
     $self->run_in_powershell(cmd => 'wsl /bin/bash -c "zypper -q se -i -t pattern wsl"');
 
-    $self->run_in_powershell(cmd => 'wsl /bin/bash -c ""xeyes"');
+    # Make a simple test with 'xeyes'
+    $self->run_in_powershell(cmd => 'wsl /bin/bash -c "xeyes"');
     assert_screen "wsl-xeyes-window-new";
     mouse_set(WIDTH/2, HEIGHT/2);
     assert_screen "wsl-xeyes-window-center";
-    send_key 'alt-f4'
+    send_key 'alt-f4';
 }
 
 1;
