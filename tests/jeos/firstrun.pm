@@ -425,7 +425,12 @@ sub run {
             enter_cmd "echo 'PermitRootLogin yes' > /etc/ssh/sshd_config.d/root.conf";
             enter_cmd "systemctl restart sshd";
         }
+        record_info("Sending Ctrl + ] ...");
         send_key('ctrl-^-]');
+        # There's a race condition that sometimes causes to try to connect to
+        # an already stablished console. Let's check for an open one, and in case
+        # there's such, close it before continuing.
+        record_info("Trying `attach_to_running` ...");
         $con->attach_to_running();
     }
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
