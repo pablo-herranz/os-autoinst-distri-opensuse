@@ -425,13 +425,10 @@ sub run {
             enter_cmd "echo 'PermitRootLogin yes' > /etc/ssh/sshd_config.d/root.conf";
             enter_cmd "systemctl restart sshd";
         }
-        record_info("Sending Ctrl + ] ...");
         send_key('ctrl-^-]');
-        # There's a race condition that sometimes causes to try to connect to
-        # an already stablished console. Let's check for an open one, and in case
-        # there's such, close it before continuing.
-        record_info("Trying `attach_to_running` ...");
+        wait_serial(qr/Connected to domain 'openQA-SUT-\d+'/, record_output => 1);
         $con->attach_to_running();
+        wait_serial(qr/error: operation failed: Active console session exists for this domain/, record_output => 1);
     }
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
 
