@@ -431,10 +431,13 @@ sub run {
         # background. Here's a workaround to detect and kill it.
         my $serial_output = wait_serial(qr/Active console session exists/);
         if ($serial_output) {
-            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting...\n\n$serial_output");
             my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
-            record_info($current_sut);
-            enter_cmd("pkill -f 'virsh console $current_sut'");
+            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting to $current_sut");
+            enter_cmd("ls -l /proc/\$(pgrep -f '$current_sut')/fd | grep -oP '(?<=/dev/pts/)\\d+'");
+            my $pts_port = wait_serial(qr/.+/);
+            enter_cmd("fuser -vk /dev/pts/$pts_port 2>&1");
+            my $fuser_output = wait_serial(qr/.+/);
+            record_info("Killing previous console...", $fuser_output);
             $con->attach_to_running();
         }
     }
