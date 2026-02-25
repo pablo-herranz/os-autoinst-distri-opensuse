@@ -429,14 +429,16 @@ sub run {
         $con->attach_to_running();
         # Sometimes the console does not shut down properly and gets stuck in the
         # background. Here's a workaround to detect and kill it.
-        my $serial_output =~ wait_serial(qr/Active console session exists/);
+        my $serial_output = wait_serial(qr/Active console session exists/);
         if ($serial_output) {
-            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting...");
+            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting...\n\n$serial_output");
             my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
-            enter_cmd('pkill -f "virsh console $current_sut"');
+            record_info($current_sut);
+            enter_cmd("pkill -f 'virsh console $current_sut'");
             $con->attach_to_running();
         }
     }
+    record_info("About to select_console...");
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
 
 
