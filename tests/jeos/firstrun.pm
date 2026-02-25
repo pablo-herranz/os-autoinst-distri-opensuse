@@ -426,9 +426,16 @@ sub run {
             enter_cmd "systemctl restart sshd";
         }
         send_key('ctrl-^-]');
-        wait_serial(qr/Connected to domain 'openQA-SUT-\d+'/, record_output => 1);
         $con->attach_to_running();
-        wait_serial(qr/error: operation failed: Active console session exists for this domain/, record_output => 1);
+        # Sometimes the console does not shut down properly and gets stuck in the
+        # background. Here's a workaround to detect and kill it.
+        my $serial_output =~ wait_serial(qr/Active console session exists/);
+        if ($serial_output) {
+            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting...");
+            my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
+            enter_cmd('pkill -f "virsh console $current_sut"');
+            $con->attach_to_running();
+        }
     }
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
 
