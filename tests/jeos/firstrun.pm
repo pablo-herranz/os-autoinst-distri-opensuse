@@ -433,15 +433,10 @@ sub run {
         if ($serial_output) {
             my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
             record_info("Active session", "Previous session did not exit properly. Killing and reconnecting to $current_sut");
-            enter_cmd_slow("ls -l /proc/\$(pgrep -f '$current_sut')/fd | grep -oP '(?<=/dev/pts/)\\d+'");
-            my $pts_port = wait_serial(qr/.+/);
-            enter_cmd_slow("fuser -vk /dev/pts/$pts_port 2>&1");
-            my $fuser_output = wait_serial(qr/.+/);
-            record_info("Killing previous console...", $fuser_output);
+            my $kill_output = $con->run_cmd("exit");
             $con->attach_to_running();
         }
     }
-    record_info("About to select_console...");
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
 
 
