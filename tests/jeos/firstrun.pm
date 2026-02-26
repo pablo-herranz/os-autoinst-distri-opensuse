@@ -433,7 +433,8 @@ sub run {
         if ($serial_output) {
             my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
             record_info("Active session", "Previous session did not exit properly. Killing and reconnecting to $current_sut");
-            my $kill_output = $con->run_cmd("exit");
+            my $kill_output = script_output("pkill -9 -f \"virsh console $current_sut\"");
+            record_info("Process killed", $kill_output)
             $con->attach_to_running();
         }
     }
