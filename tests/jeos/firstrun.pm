@@ -426,17 +426,10 @@ sub run {
             enter_cmd "systemctl restart sshd";
         }
         send_key('ctrl-^-]');
-        $con->attach_to_running();
         # Sometimes the console does not shut down properly and gets stuck in the
-        # background. Here's a workaround to detect and kill it.
-        my $serial_output = wait_serial(qr/Active console session exists/);
-        if ($serial_output) {
-            my ($current_sut) = $serial_output =~ /(openQA-SUT-\d+)/;
-            record_info("Active session", "Previous session did not exit properly. Killing and reconnecting to $current_sut");
-            my $kill_output = script_output("pkill -9 -f \"virsh console $current_sut\"");
-            record_info("Process killed", $kill_output);
-            $con->attach_to_running();
-        }
+        # background. Let's leave it some time...
+        sleep(30);
+        $con->attach_to_running();
     }
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
 
