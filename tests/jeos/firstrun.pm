@@ -428,7 +428,7 @@ sub run {
         send_key('ctrl-^-]');
         # Sometimes the console does not shut down properly and gets stuck in the
         # background. Let's leave it some time...
-        sleep(5);
+        sleep(15);
         $con->attach_to_running();
     }
     select_console('root-console', skip_set_standard_prompt => 1, skip_setterm => 1, skip_disable_key_repeat => 1);
