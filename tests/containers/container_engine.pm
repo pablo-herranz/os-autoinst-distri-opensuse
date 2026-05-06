@@ -40,7 +40,7 @@ sub basic_container_tests {
 
     # Test pulling and display of images
     script_retry("$runtime image pull $image", timeout => 600, retry => 3, delay => 120);
-    validate_script_output("$runtime image ls", qr/tumbleweed/);
+    validate_script_output("$runtime image ls", qr/tumbleweed|leap/);
 
     ## Create test container
     assert_script_run("$runtime create --name basic_test_container $image sleep infinity");
