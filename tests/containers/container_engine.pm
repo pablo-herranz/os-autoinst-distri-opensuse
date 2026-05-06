@@ -102,9 +102,9 @@ sub basic_container_tests {
     validate_script_output("$runtime image ls --all", qr?example.com/prune-test?);
     assert_script_run("$runtime image prune -af");
     validate_script_output("$runtime ps", sub { $_ !~ m?example.com/prune-test? });
-    validate_script_output("$runtime image ls", qr/tumbleweed/, fail_message => "Tumbleweed image removed, despite being in use");
+    validate_script_output("$runtime image ls", qr/tumbleweed|leap/, fail_message => "Tumbleweed image removed, despite being in use");
     assert_script_run("$runtime system prune -f");
-    validate_script_output("$runtime image ls", qr/tumbleweed/, fail_message => "Tumbleweed image removed, despite being in use");
+    validate_script_output("$runtime image ls", qr/tumbleweed|leap/, fail_message => "Tumbleweed image removed, despite being in use");
     assert_script_run("! $runtime rmi $image");    # should not be possible because image is in use
 
     ## Removing containers
