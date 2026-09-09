@@ -14,7 +14,7 @@ use Mojo::Base -base;
 use File::Basename;
 use publiccloud::utils;
 use Utils::Backends qw(set_sshserial_dev unset_sshserial_dev);
-use publiccloud::ssh_interactive qw(ssh_interactive_tunnel ssh_interactive_leave select_host_console);
+use publiccloud::ssh_interactive qw(ssh_interactive_tunnel select_host_console);
 use version_utils;
 use utils;
 
@@ -605,18 +605,23 @@ sub softreboot {
     my $prev_console = current_console();
     # On TUNNELED test runs, we need to re-establish the tunnel
     my $tunneled = is_tunneled() && get_var("_SSH_TUNNELS_INITIALIZED", 0);
-    if ($tunneled) {
-        select_console('tunnel-console', await_console => 0);
-        ssh_interactive_leave();
-        for (1 .. 5) {
-            last if (script_run(sprintf('ssh -O check %s@%s', $args{username}, $self->public_ip)) != 0);
-            script_run(sprintf('ssh -O exit %s@%s', $args{username}, $self->public_ip));
-            sleep 5;
-        }
-    }
 
-    # Let's go to host console (where we have the provider specific environment variables)
-    select_host_console();
+    # Let's go to host console (where we have the provider specific environment variables).
+    # force => 1 makes select_host_console() handle leaving a stale tunnel-console itself
+    # (including terminating a wedged ssh session via the local '~.' escape sequence), instead
+    # of us trying to do it manually here - see poo#206808.
+    select_host_console(force => 1);
+
+    if ($tunneled) {
+        # Remove any leftover SSH ControlMaster socket for 'sut' (see data/publiccloud/ssh_config,
+        # ControlPersist keeps it running in the background beyond the session that created it).
+        # A stale/wedged master left over from a previous reboot would otherwise be silently
+        # reused - and potentially hang - by future ssh invocations sharing the same ControlPath.
+        # This removes the socket file directly instead of polling the master via 'ssh -O check/exit',
+        # which itself can hang forever waiting on a master that's alive but unresponsive.
+        # See poo#156718 (why this cleanup exists) and poo#206808 (why polling isn't safe).
+        script_run(sprintf('rm -f /tmp/ssh_%s_%s_22', $args{username}, $self->public_ip));
+    }
 
     $self->ssh_assert_script_run(cmd => 'sudo /sbin/shutdown -r +1');
     sleep 60;    # wait for the +1 in the previous command
