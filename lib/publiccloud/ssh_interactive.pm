@@ -62,7 +62,10 @@ sub ssh_interactive_tunnel {
     # Previously this ran in the foreground, so the only way to interact with this console again
     # was to interrupt it with 'ctrl-c' - unreliable, since with 'ssh -t' inside the loop, ctrl-c
     # can land on the remote ssh session instead of interrupting the local loop. See poo#206808.
-    enter_cmd("(while true; do ssh sut -yt -R '$upload_port:$upload_host:$upload_port' 'rm -f /dev/sshserial && mkfifo -m a=rwx /dev/sshserial && tail -fn +1 /dev/sshserial' 2>&1 >/dev/$serialdev; sleep 5; done) & echo \$! > /tmp/openqa_tunnel_loop.pid");
+    # Note the redirection order: '>/dev/$serialdev 2>&1' (not '2>&1 >/dev/$serialdev'!) so that
+    # BOTH stdout and stderr go to the serial device - the old order left stderr (e.g. ssh's own
+    # "Shared connection to X closed." messages) leaking onto this console, corrupting later commands.
+    enter_cmd("(while true; do ssh sut -yt -R '$upload_port:$upload_host:$upload_port' 'rm -f /dev/sshserial && mkfifo -m a=rwx /dev/sshserial && tail -fn +1 /dev/sshserial' >/dev/$serialdev 2>&1; sleep 5; done) & echo \$! > /tmp/openqa_tunnel_loop.pid");
     # give the ssh connection some time to settle
     sleep 10;
 
