@@ -57,8 +57,12 @@ sub ssh_interactive_tunnel {
     assert_script_run('ssh -o BatchMode=yes sut true', fail_message => 'SSH is kaput.');
 
     # Pipe the output of the device fifo to the local serial terminal
-# Note: We run this in a loop so that the ssh tunnel gets automatically re-established after device reboots and such. The sleep helps to avoid unnecessary CPU hogging in case of connection issues
-    enter_cmd("while true; do ssh sut -yt -R '$upload_port:$upload_host:$upload_port' 'rm -f /dev/sshserial && mkfifo -m a=rwx /dev/sshserial && tail -fn +1 /dev/sshserial' 2>&1 >/dev/$serialdev; sleep 5; done");
+    # Note: We run this in a loop so that the ssh tunnel gets automatically re-established after device reboots and such. The sleep helps to avoid unnecessary CPU hogging in case of connection issues
+    # Run it in the background (saving its PID) so this console keeps a free prompt afterwards.
+    # Previously this ran in the foreground, so the only way to interact with this console again
+    # was to interrupt it with 'ctrl-c' - unreliable, since with 'ssh -t' inside the loop, ctrl-c
+    # can land on the remote ssh session instead of interrupting the local loop. See poo#206808.
+    enter_cmd("(while true; do ssh sut -yt -R '$upload_port:$upload_host:$upload_port' 'rm -f /dev/sshserial && mkfifo -m a=rwx /dev/sshserial && tail -fn +1 /dev/sshserial' 2>&1 >/dev/$serialdev; sleep 5; done) & echo \$! > /tmp/openqa_tunnel_loop.pid");
     # give the ssh connection some time to settle
     sleep 10;
 
@@ -88,15 +92,19 @@ sub ssh_interactive_leave {
     my $test = sub { my $ret; eval { $ret = script_run('true', timeout => 5) == 0 };
         if ($@) { $ret = 0 }; return $ret };
 
-    # While the tunnel console is active, the serial terminal sometimes swallows characters. To terminate the
-    # ssh tunnel reliably, we repeat the process until it succeeds. A delay between retries is useful to let thinks
-    # cool down after a failed attempt
+    # Kill the background reverse-tunnel loop directly by PID - deterministic, unlike
+    # 'ctrl-c' which can be forwarded to the remote ssh session instead of interrupting
+    # the local loop when it lands mid-connection. See poo#206808.
+    script_run('test -f /tmp/openqa_tunnel_loop.pid && kill $(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null; true', timeout => 10);
+
+    # Fallback in case the console is still stuck for some other reason: retry with
+    # ctrl-c like before. A delay between retries is useful to let things cool down
+    # after a failed attempt.
     my $retries = 8;
-    while ($retries-- > 0) {
+    while (!$test->() && $retries-- > 0) {
         send_key 'ctrl-c';
         send_key 'ctrl-c';
         send_key 'ret';
-        last if ($test->());
         sleep 5;    # some cool down after a failed attempt
     }
 
