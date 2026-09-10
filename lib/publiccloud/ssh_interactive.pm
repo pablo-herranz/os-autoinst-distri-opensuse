@@ -97,8 +97,12 @@ sub ssh_interactive_leave {
 
     # Kill the background reverse-tunnel loop directly by PID - deterministic, unlike
     # 'ctrl-c' which can be forwarded to the remote ssh session instead of interrupting
-    # the local loop when it lands mid-connection. See poo#206808.
-    script_run('test -f /tmp/openqa_tunnel_loop.pid && kill $(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null; true', timeout => 10);
+    # the local loop when it lands mid-connection. We type this blind with enter_cmd
+    # (no marker wait) instead of script_run: while the loop is still alive it keeps
+    # writing to the same serial channel script_run's completion marker relies on,
+    # which can corrupt/hide that marker and hang forever. See poo#206808.
+    enter_cmd('test -f /tmp/openqa_tunnel_loop.pid && kill $(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null');
+    sleep 3;    # give it a moment to actually terminate
 
     # Fallback in case the console is still stuck for some other reason: retry with
     # ctrl-c like before. A delay between retries is useful to let things cool down
