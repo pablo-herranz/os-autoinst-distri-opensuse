@@ -95,12 +95,6 @@ sub ssh_interactive_leave {
     my $test = sub { my $ret; eval { $ret = script_run('true', timeout => 5) == 0 };
         if ($@) { $ret = 0 }; return $ret };
 
-    # DEBUG poo#206808: capture the loop/PID state before we touch anything, to
-    # find out why the kill below is unreliable on some reboot cycles but not
-    # others. Remove once root-caused.
-    my $dbg_before = eval { script_output('cat /tmp/openqa_tunnel_loop.pid 2>&1; echo ---; ps -eo pid,ppid,pgid,stat,cmd 2>&1', proceed_on_failure => 1, timeout => 10) };
-    record_info('tunnel debug (before kill)', $dbg_before // "eval failed: $@");
-
     # Kill the background reverse-tunnel loop directly by PID - deterministic, unlike
     # 'ctrl-c' which can be forwarded to the remote ssh session instead of interrupting
     # the local loop when it lands mid-connection. We type this blind with enter_cmd
@@ -114,12 +108,11 @@ sub ssh_interactive_leave {
     enter_cmd('test -f /tmp/openqa_tunnel_loop.pid && kill -- -$(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null');
     sleep 1;
     enter_cmd('test -f /tmp/openqa_tunnel_loop.pid && kill -9 -- -$(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null');
-    sleep 3;    # give it a moment to actually terminate
-
-    # DEBUG poo#206808: capture the state right after the kill attempts, before the
-    # ctrl-c fallback loop below potentially cleans things up and hides the evidence.
-    my $dbg_after = eval { script_output('ps -eo pid,ppid,pgid,stat,cmd 2>&1', proceed_on_failure => 1, timeout => 10) };
-    record_info('tunnel debug (after kill)', $dbg_after // "eval failed: $@");
+    # Give the loop's noisy output (ssh reconnect attempts, etc.) time to settle on
+    # the serial device before we start checking with marker-based script_run below -
+    # otherwise leftover noise can corrupt/hide the marker and trigger unnecessary
+    # ctrl-c retries even though the kill itself already succeeded. See poo#206808.
+    sleep 8;
 
     # Fallback in case the console is still stuck for some other reason: retry with
     # ctrl-c like before. A delay between retries is useful to let things cool down
