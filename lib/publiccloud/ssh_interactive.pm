@@ -103,8 +103,11 @@ sub ssh_interactive_leave {
     # which can corrupt/hide that marker and hang forever.
     # Use the *negative* PID to kill the whole process group, not just the loop's own
     # bash process - otherwise the ssh child currently running inside the loop survives
-    # as an orphan and keeps writing to the serial device. See poo#206808.
+    # as an orphan and keeps writing to the serial device. Follow up with SIGKILL in
+    # case the ssh child is momentarily ignoring SIGTERM. See poo#206808.
     enter_cmd('test -f /tmp/openqa_tunnel_loop.pid && kill -- -$(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null');
+    sleep 1;
+    enter_cmd('test -f /tmp/openqa_tunnel_loop.pid && kill -9 -- -$(cat /tmp/openqa_tunnel_loop.pid) 2>/dev/null');
     sleep 3;    # give it a moment to actually terminate
 
     # Fallback in case the console is still stuck for some other reason: retry with
