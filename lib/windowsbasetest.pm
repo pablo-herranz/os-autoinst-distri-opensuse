@@ -189,9 +189,26 @@ sub windows_login {
 }
 
 
+sub upload_windows_diagnostics {
+    my ($self) = @_;
+    # The serial port is only open while the PowerShell window of the test is still there
+    return unless check_screen('powershell-as-admin-window', 10);
+    my $script_url = data_url('wsl/collect_logs.ps1');
+    my $upload_url = autoinst_url('/uploadlog/win-diag.zip');
+    $self->run_in_powershell(cmd => qq{Invoke-WebRequest -Uri "$script_url" -OutFile "\$env:TEMP\\collect_logs.ps1" -UseBasicParsing});
+    $self->run_in_powershell(
+        cmd => qq{powershell.exe -NoProfile -ExecutionPolicy Bypass -File "\$env:TEMP\\collect_logs.ps1" -UploadUrl "$upload_url"},
+        timeout => 900
+    );
+}
+
+
 sub post_fail_hook {
+    my ($self) = @_;
     sleep 30;
     save_screenshot;
+    eval { $self->upload_windows_diagnostics };
+    bmwqemu::diag("Could not upload the Windows diagnostics: $@") if $@;
 }
 
 1;
