@@ -23,13 +23,17 @@ sub windows_run {
 
 sub _setup_serial_device {
     if (is_aarch64) {
-        type_string '$port = new-Object System.IO.Ports.SerialPort COM3,9600,None,8,one', max_interval => 125;
+        # Windows on Arm has no COM port for QEMU. Write to the virtio-serial port instead.
+        type_string 'Invoke-WebRequest -UseBasicParsing -Uri "' . data_url('wsl/virtio_serial.ps1') . '" -OutFile "$env:TEMP\virtio_serial.ps1"', max_interval => 125;
+        wait_screen_change(sub { send_key 'ret' }, 10);
+        type_string 'iex (Get-Content -Raw "$env:TEMP\virtio_serial.ps1")', max_interval => 125;
+        wait_screen_change(sub { send_key 'ret' }, 10);
     } else {
         type_string '$port = new-Object System.IO.Ports.SerialPort COM1,9600,None,8,one', max_interval => 125;
+        wait_screen_change(sub { send_key 'ret' }, 10);
+        type_string '$port.open()', max_interval => 125;
+        wait_screen_change(sub { send_key 'ret' }, 10);
     }
-    wait_screen_change(sub { send_key 'ret' }, 10);
-    type_string '$port.open()', max_interval => 125;
-    wait_screen_change(sub { send_key 'ret' }, 10);
     type_string '$port.WriteLine("Serial Port has been opened...")', max_interval => 125;
     wait_screen_change(sub { send_key 'ret' }, 10);
     wait_serial 'Serial Port has been opened...';

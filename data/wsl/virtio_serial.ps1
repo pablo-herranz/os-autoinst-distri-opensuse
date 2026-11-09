@@ -1,0 +1,5 @@
+# Opens the virtio-serial port org.openqa.serial of the QEMU machine and stores
+# a writer with the methods WriteLine and Close and the property IsOpen in $port.
+# FileStream refuses a device path, so the handle comes from CreateFile.
+Add-Type -TypeDefinition 'using System;using System.IO;using System.Runtime.InteropServices;using Microsoft.Win32.SafeHandles;public class VirtioSerial{[DllImport("kernel32.dll",SetLastError=true,CharSet=CharSet.Unicode)]static extern SafeFileHandle CreateFile(string n,uint a,uint s,IntPtr p,uint d,uint f,IntPtr t);StreamWriter w;bool o=true;public bool IsOpen{get{return o;}}public VirtioSerial(string n){SafeFileHandle h=CreateFile(n,0x40000000,3,IntPtr.Zero,3,0,IntPtr.Zero);if(h.IsInvalid)throw new IOException("CreateFile failed "+Marshal.GetLastWin32Error());w=new StreamWriter(new FileStream(h,FileAccess.Write,1,false));w.AutoFlush=true;}public void WriteLine(string s){w.WriteLine(s);}public void Close(){o=false;w.Close();}}'
+$port = New-Object VirtioSerial('\\.\Global\org.openqa.serial')
