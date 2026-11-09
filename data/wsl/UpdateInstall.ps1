@@ -9,7 +9,7 @@ function LogMessage {
 }
 
 # Validate COM port status at script start
-if (-not $port -or -not ($port -is [System.IO.Ports.SerialPort]) -or -not $port.IsOpen) {
+if (-not $port -or -not $port.IsOpen) {
     LogMessage "COM port is not initialized or closed. Exiting." -Color "Red"
     exit 1
 }
