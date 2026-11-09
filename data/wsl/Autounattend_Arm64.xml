@@ -435,6 +435,10 @@
           <Order>2</Order>
           <CommandLine>powershell.exe wsl --update</CommandLine>
         </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <CommandLine>powershell.exe -NoProfile -Command "Get-PSDrive -PSProvider FileSystem | ForEach-Object { $inf = Join-Path $_.Root 'vioserial\w11\ARM64\vioser.inf'; if (Test-Path $inf) { pnputil.exe /add-driver $inf /install } }"</CommandLine>
+        </SynchronousCommand>
       </FirstLogonCommands>
     </component>
   </settings>
