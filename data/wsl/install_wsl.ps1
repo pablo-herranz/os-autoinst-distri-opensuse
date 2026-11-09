@@ -18,9 +18,11 @@ if (-not $Tag) {
     if (-not $Tag) { throw 'Could not find the latest WSL release' }
 }
 
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+
 $assets = curl.exe --silent --show-error --location "https://github.com/microsoft/WSL/releases/expanded_assets/$Tag"
-$path = ($assets | Select-String -Pattern 'href="([^"]*x64\.msi)"').Matches.Groups[1].Value
-if (-not $path) { throw "No x64 msi in the WSL release $Tag" }
+$path = ($assets | Select-String -Pattern "href=`"([^`"]*$arch\.msi)`"").Matches.Groups[1].Value
+if (-not $path) { throw "No $arch msi in the WSL release $Tag" }
 
 $msi = Join-Path $env:TEMP (Split-Path $path -Leaf)
 curl.exe --silent --show-error --location --fail --output $msi "https://github.com$path"
